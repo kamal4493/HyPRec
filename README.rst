@@ -1,7 +1,6 @@
-Master project about recommender systems.
-
 Setup 
 ==========
+
 #. Importing the dataset:
 This project is based on the citeulike dataset from: http://www.wanghao.in/data/ctrsr_datasets.rar
 Put the citeulike-a and citeulike-t folders in the data folder.
