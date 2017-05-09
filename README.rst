@@ -1,7 +1,25 @@
 Master project about recommender systems.
 
+Setup 
+==========
+#. Importing the dataset:
+This project is based on the citeulike dataset from: http://www.wanghao.in/data/ctrsr_datasets.rar
+Put the citeulike-a and citeulike-t folders in the data folder.
+
+#. Initializing the database:
+We are mainly using citeulike datasets, we assume that the data files are in the directory data/, and the database configuration from config/config.json
+
+To build the database, we run the command: ::
+
+      make rebuild-database
+
+We execute this statement in MySQL console before importing the data: ::
+
+      set autocommit = 0;
+
 How to use
 ==========
+
 #. Reading recommender's specifications from config/recommender.json, we run our recommender is made through the runnables.py script, using the command: ::
 
      make run
@@ -24,17 +42,6 @@ Testing
 
       python runtests.py test1 test2 test3 # ...
 
-Database
-========
-We are mainly using citeulike datasets, we assume that the data files are in the directory data/, and the database configuration from config/config.json
-
-To build the database, we run the command: ::
-
-      make rebuild-database
-
-We execute this statement in MySQL console before importing the data: ::
-
-      set autocommit = 0;
 
 Documentation
 =============
