@@ -1,12 +1,35 @@
+Requirements
+============
+* pep8
+* python-coverage
+* mysql-client
+* mysql-server
+* mysql-python
+* json
+* sklearn
+* numpy
+* sphinx
+* scipy
+* overrides
+* tensorflow
+* keras
+* pandas
+* lda2vec
+* spaCy
+* chainer
+* python-dev
+
 Setup 
 ==========
 
-#. Importing the dataset:
-This project is based on the citeulike dataset from: http://www.wanghao.in/data/ctrsr_datasets.rar
-Put the citeulike-a and citeulike-t folders in the data folder.
+1. Importing the dataset: 
 
-#. Initializing the database:
-We are mainly using citeulike datasets, we assume that the data files are in the directory data/, and the database configuration from config/config.json
+This project is based on the citeulike dataset from: http://www.wanghao.in/data/ctrsr_datasets.rar
+Download the datasets citeulike-a and citeulike-t from the tonga server and add them into the folder data/.
+
+2. Initializing the database:
+
+We assume that the data files are in the directory data/, and the database configuration from config/config.json
 
 To build the database, we run the command: ::
 
@@ -54,42 +77,13 @@ We are following flake8 code conventions, we can verify it using the command: ::
 
       make lint-flake8
 
-Authors
-=======
-Authored by:
-
-* Mostafa M. Mohamed <mostafa.amin93@gmail.com>
-* Omar Nada <ndomar.14@gmail.com>
-* Ibrahim Alshibani <ibrahim.alshibani@gmail.com>
-
-Requirements
-============
-* pep8
-* python-coverage
-* mysql-client
-* mysql-server
-* mysql-python
-* json
-* sklearn
-* numpy
-* sphinx
-* scipy
-* overrides
-* tensorflow
-* keras
-
-* pandas
-* lda2vec
-* spaCy
-* chainer
-* python-dev
 
 Issues and TODOs
 ================
-https://github.com/mostafa-mahmoud/sahwaka/issues
+https://github.com/anasalzogbi/HyPRec/issues
 
 License
 =======
-Sahwaka is licensed under the Apache License 2.0 
+HyPRec is licensed under the Apache License 2.0 
 
 Copyright © 2017 by Albert-Ludwigs-Universität Freiburg, Institut für Informatik 
