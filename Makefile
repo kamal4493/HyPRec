@@ -40,13 +40,13 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(BROWSER) docs/_build/html/index.html
 
 test: ## run tests quickly with the default Python
-	python3 -W ignore runtests.py
+	python -W ignore runtests.py
 
 run: ## run recommender
-	python3 -W ignore runnables.py -lsvd
+	python -W ignore runnables.py -lsvd
 
 experiment: ## run experiment
-	python3 -W ignore runnables.py -lsvd experiment
+	python -W ignore runnables.py -lsvd experiment
 
 clean-training: ## removing training models
 	find matrices -name '*.dat' -exec rm -f {} +
@@ -55,7 +55,7 @@ clean-reports: ## removing training models
 	find matrices -name '*.csv' -exec rm -f {} +
 
 rebuild-database: ## rebuild the database
-	python3 -c "from util.data_parser import DataParser; DataParser.drop_database(); DataParser.process()"
+	python -c "from util.data_parser import DataParser; DataParser.drop_database(); DataParser.process()"
 
 coverage: ## check code coverage quickly with the default Python
 	python3-coverage run runtests.py

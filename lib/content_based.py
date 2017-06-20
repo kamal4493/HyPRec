@@ -99,6 +99,7 @@ class ContentBased(AbstractRecommender):
         # by changing the multiplication order
         # predicted_rating[u,i] = sum[j]{R[u,j] Vj * Vi} / sum[j]{Vj * Vi}
         #                       = sum[j]{R[u,j] * cos(i, j)} / sum[j]{cos(i, j)}
+        
         if self.document_distribution is None:
             V = numpy.random.random((self.n_items, self.n_factors))
         else:
@@ -114,4 +115,5 @@ class ContentBased(AbstractRecommender):
         self.predictions = weighted_ratings / weights  # Divisions by zero are handled.
         del weighted_ratings
         self.predictions[~numpy.isfinite(self.predictions)] = 0.0
+       
         return self.predictions

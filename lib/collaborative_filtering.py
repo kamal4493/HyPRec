@@ -280,7 +280,6 @@ class CollaborativeFiltering(AbstractRecommender):
             else:
                 self.prediction_fold = self.hyperparameters['fold']
                 self.predictions = collaborative_predictions
-
         return self.predictions
 
     @overrides
