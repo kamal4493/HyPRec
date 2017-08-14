@@ -131,13 +131,21 @@ class LTRRecommender(object):
       predictions = numpy.zeros((self.n_users,self.n_docs))
       prediction_scores = numpy.zeros((self.n_users,self.n_docs))
       for user in range(self.n_users):
+
+        """
+        #TODO: vectorize this
         for index,indice in enumerate(self.test_indices[user]):
           doc_to_pred = self.theta[indice]
+          print(doc_to_pred.shape)
           #experimenting to get a difference of test document and a potential negative rated document and then predicting
           #doc_negative = self.random_neg_indices[user]
           #doc_to_pred = doc_to_pred - self.theta[doc_negative]
-          doc_to_pred.shape = (doc_to_pred.shape[0],-1)
-          predictions[user][indice] = self.user_model[user].predict(doc_to_pred.T)
-          prediction_scores[user][indice] = self.user_model[user].predict_proba(doc_to_pred.T)[0, 1]
+          doc_to_pred.shape = (1,doc_to_pred.shape[0])
+          predictions[user][indice] = self.user_model[user].predict(doc_to_pred)
+          prediction_scores[user][indice] = self.user_model[user].predict_proba(doc_to_pred)[0, 1]"""
+        #half vectorized version (still outer loop there) :(
+        docs_to_test = self.theta[ self.test_indices[user] ]
+        predictions[user , self.test_indices[user] ] = self.user_model[user].predict(docs_to_test)
+        prediction_scores[user,self.test_indices[user]  ] = self.user_model[user].predict_proba(docs_to_test)[0, 1]
 
       return predictions,prediction_scores
