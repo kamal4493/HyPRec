@@ -2,9 +2,9 @@
 	"database": {
 		"host": "localhost",
 		"user": "root",
-		"password": "",
-		"database_name": "sahwaka"
+		"password": "1234",
+		"database_name": "cituT"
 	},
-	"dataset": "citeulike-a",
+	"dataset": "citeulike-t",
 	"store_abstracts": true
 }

@@ -99,5 +99,7 @@ class ModelInitializer(object):
         config['n_factors'] = matrix_shape[1]
         config['n_rows'] = n_rows
         path = self._generate_file_name(config, matrix_name)
-        base_dir = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(os.path.dirname(base_dir), self.folder, path + '.dat')
+        saving_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), self.folder)
+        if not os.path.exists(saving_dir):
+            os.makedirs(saving_dir)
+        return os.path.join(os.path.dirname(saving_dir), self.folder, path + '.dat')

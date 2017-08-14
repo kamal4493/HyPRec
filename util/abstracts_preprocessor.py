@@ -77,8 +77,8 @@ class AbstractsPreprocessor(object):
         :returns: The number of items given.
         :rtype: int
         """
-        return max(self.abstracts.keys()) + 1
-
+        #return max(self.abstracts.keys()) + 1
+        return len(self.abstracts.keys())
     def get_term_frequencies(self):
         """
         :returns: The list of frequencies of words.

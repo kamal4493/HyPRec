@@ -7,7 +7,7 @@ import numpy
 from util.top_recommendations import TopRecommendations
 
 
-class Evaluator(object):
+class Evaluator (object):
     """
     A class for computing evaluation metrics and splitting the input data.
     """
@@ -332,8 +332,13 @@ class Evaluator(object):
             self.load_top_recommendations(n_recommendations, predictions, test_data)
 
         mrr_list = [0]
-
+       # print(predictions)
+        #print("rounded predictions")
+        #print(rounded_predictions)
+        #print("test_data")
+        #print(test_data)
         for user in range(self.ratings.shape[0]):
+            
             for mrr_index, index in enumerate(self.recommendation_indices[user]):
                 score = self.ratings[user][index] * rounded_predictions[user][index]
                 mrr_list.append(score / (mrr_index + 1))
@@ -341,5 +346,4 @@ class Evaluator(object):
                     break
                 if mrr_index + 1 == n_recommendations:
                     break
-
         return numpy.mean(mrr_list, dtype=numpy.float16)

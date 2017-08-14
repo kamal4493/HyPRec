@@ -66,5 +66,6 @@ class LDARecommender(ContentBased):
             print("Initialized LDA model..., Training LDA...")
 
         self.document_distribution = lda.fit_transform(term_freq)
+
         if self._verbose:
             print("LDA trained..")

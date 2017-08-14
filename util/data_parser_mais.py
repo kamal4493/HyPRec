@@ -12,107 +12,6 @@ class DataParser(object):
     """
     A class for parsing given data files.
     """
-
-    def __init__(self, n_users=None):
-        self.n_users = n_users
-
-    def get_ratings_hash(self):
-        """
-        :returns: A dictionary of user_id to a list of paper_id, of the papers this user rated.
-        :rtype: dict
-        """
-        db = DataParser.get_connection()
-        cursor = db.cursor()
-        config = DataParser.get_config()
-        cursor.execute("use %s" % config["database"]["database_name"])
-        cursor.execute("set group_concat_max_len=100000")
-        if self.n_users is None:
-            cursor.execute("select user_id, group_concat(article_id separator ', ') from articles_users" +
-                           " group by user_id")
-        else:
-            cursor.execute("select user_id, group_concat(article_id separator ', ') from articles_users" +
-                           " group by user_id order by user_id limit %s" % self.n_users)
-        ratings_hash = {}
-        all_papers = set()
-        for (user_id, json_object) in cursor:
-            papers = DataParser.listify(json_object)
-            ratings_hash[int(user_id) - 1] = papers
-            if self.n_users is not None:
-                all_papers = all_papers.union(set(papers))
-        DataParser.clean_up(db, cursor)
-        if self.n_users is not None:
-            self.papers = list(sorted(all_papers))
-            self.papers_map = {}
-            for i, paper in enumerate(self.papers):
-                self.papers_map[paper] = i
-        return ratings_hash
-
-    def get_ratings_matrix(self):
-        """
-        :returns:
-            Matrix between users and documents. 1 indicates that the user has the document
-            in his library, 0 otherwise.
-        :rtype: int[][]
-        """
-        ratings_hash = self.get_ratings_hash()
-        num_users = DataParser.get_row_count("users")
-        num_articles = DataParser.get_row_count("articles")
-        if self.n_users is not None:
-            num_users = self.n_users
-            num_articles = len(self.papers)
-        ratings_matrix = [[0] * num_articles for _ in range(num_users)]
-        for user_id, articles in ratings_hash.items():
-            for article_id in articles:
-                #Bug discovered by Anas on 19.7, old code:
-                #ratings_matrix[user_id - 1][article_id - 1] = 1
-                #Correct code:
-                if self.n_users is None:
-                    ratings_matrix[user_id][article_id - 1] = 1
-                else:
-                    ratings_matrix[user_id][self.papers_map[article_id]] = 1
-        return ratings_matrix
-
-    def get_word_distribution(self):
-        """
-        The function return metrics of word distributions with articles. First is a list of articles and words.
-        Second is a list of words and their counts, third is a list of words, articles and their counts.
-
-        :returns: a triple of arrays
-        :rtype: triple
-        """
-        db = DataParser.get_connection()
-        cursor = db.cursor()
-        config = DataParser.get_config()
-        cursor.execute("use %s" % config["database"]["database_name"])
-        if self.n_users is None:
-            cursor.execute("select article_id, word_id from words_articles order by article_id, word_id")
-            article_words = cursor.fetchall()
-            article_words = list(map(lambda t: (t[0] - 1, t[1] - 1), article_words))
-            cursor.execute("select article_id, word_id, count as word_count"
-                           " from words_articles order by article_id, word_id")
-            article_word_count = cursor.fetchall()
-            article_word_count = list(map(lambda t: (t[0] - 1, t[1] - 1, t[2]), article_word_count))
-            cursor.execute("select word_id, count(*) as word_count from" + 
-                           " words_articles group by word_id order by word_id")
-            word_count = cursor.fetchall()
-            word_count = list(map(lambda t: (t[0] - 1, t[1]), word_count))
-        else:
-            query_string = ', '.join(list(map(lambda x: '%s', self.papers)))
-            cursor.execute("select article_id, word_id from words_articles where article_id in" +  
-                           " (%s) order by article_id, word_id" % query_string, self.papers)
-            article_words = cursor.fetchall()
-            article_words = list(map(lambda t: (self.papers_map[t[0]], t[1] - 1), article_words))
-            cursor.execute("select article_id, word_id, count as word_count"
-                           " from words_articles where article_id in (%s) order by article_id, word_id" % query_string, self.papers)
-            article_word_count = cursor.fetchall()
-            article_word_count = list(map(lambda t: (self.papers_map[t[0]], t[1] - 1, t[2]), article_word_count))
-            cursor.execute("select word_id, count(*) as word_count from words_articles" +
-                           " where article_id in (%s) group by word_id order by word_id" % query_string, self.papers)
-            word_count = cursor.fetchall()
-            word_count = list(map(lambda t: (t[0] - 1, t[1]), word_count))
-
-        return word_count, article_words, article_word_count
-
     @staticmethod
     def process():
         """
@@ -142,6 +41,49 @@ class DataParser(object):
         return list(map(int, input_str.split(',')))
 
     @staticmethod
+    def get_word_distribution():
+        """
+        The function return metrics of word distributions with articles. First is a list of articles and words.
+        Second is a list of words and their counts, third is a list of words, articles and their counts.
+
+        :returns: a triple of arrays
+        :rtype: triple
+        """
+        db = DataParser.get_connection()
+        cursor = db.cursor()
+        config = DataParser.get_config()
+        cursor.execute("use %s" % config["database"]["database_name"])
+        cursor.execute("select article_id, word_id from words_articles order by article_id, word_id")
+        article_words = cursor.fetchall()
+        article_words = list(map(lambda t: (t[0] - 1, t[1] - 1), article_words))
+        cursor.execute("select word_id, count(*) as word_count from words_articles group by word_id order by word_id")
+        word_count = cursor.fetchall()
+        word_count = list(map(lambda t: (t[0] - 1, t[1]), word_count))
+        cursor.execute("select article_id, word_id, count(*) as word_count "
+                       "from words_articles group by word_id, article_id order by article_id, word_id")
+        word_article_count = cursor.fetchall()
+        word_article_count = list(map(lambda t: (t[0] - 1, t[1] - 1, t[2]), word_article_count))
+        return word_count, article_words, word_article_count
+
+    @staticmethod
+    def get_ratings_hash():
+        """
+        :returns: A dictionary of user_id to a list of paper_id, of the papers this user rated.
+        :rtype: dict
+        """
+        db = DataParser.get_connection()
+        cursor = db.cursor()
+        config = DataParser.get_config()
+        cursor.execute("use %s" % config["database"]["database_name"])
+        cursor.execute("set group_concat_max_len=100000")
+        cursor.execute("select user_id, group_concat(article_id separator ', ') from articles_users group by user_id")
+        ratings_hash = {}
+        for (user_id, json_object) in cursor:
+            ratings_hash[int(user_id) - 1] = DataParser.listify(json_object)
+        DataParser.clean_up(db, cursor)
+        return ratings_hash
+
+    @staticmethod
     def get_row_count(table_name):
         """
         :returns: indicating number of users
@@ -155,11 +97,60 @@ class DataParser(object):
         row = cursor.fetchone()
         return int(row[0])
 
-
+    @staticmethod
+    def get_ratings_matrix():
+        """
+        :returns:
+            Matrix between users and documents. 1 indicates that the user has the document
+            in his library, 0 otherwise.
+        :rtype: int[][]
+        """
+        ratings_hash = DataParser.get_ratings_hash()
+        num_users = DataParser.get_row_count("users")
+        num_articles = DataParser.get_row_count("articles")
+        ratings_matrix = [[0] * num_articles for _ in range(num_users)]
+        for user_id, articles in ratings_hash.items():
+            for article_id in articles:
+                ratings_matrix[user_id - 1][article_id - 1] = 1
+        return ratings_matrix
+        
+    @staticmethod
+    def get_labeled_r(strategy):
+        """
+        :returns:
+            Matrix between users and documents. 1 indicates that the user has the document
+            in his library, -1 indicates that the document is the potential negative document for 
+            a user and 0 otherwise
+        :rtype: int[][]
+        """
+        labeled_rating_matrix = DataParser.get_ratings_matrix()
+        if strategy == random:
+            labeled_ratings_matrix = DataParser.put_random_negatives(labeled_ratings_matrix)   
+        return labeled_rating_matrix
+          
+    @staticmethod
+    def put_random_negatives(labeled_ratings_matrix):
+        """
+        input:
+            rating matrix
+        :returns:
+            randomly put negative ratings and return the rating_matrix
+        :rtype: int[][]
+        """
+        for user_lib in labeled_rating_matrix:
+            non_zeros = [id for id,val in enumerate(user_lib)  if val != 1]
+            num_positive_ids = user_lib.count(1)
+            random_negatives = numpy.random.choice(non_zeros ,num_positive_ids,replace=False)
+            for random_id in random_negatives:
+                user_lib[random_id] = -1              
+        return labeled_rating_matrix
+        
     @staticmethod
     def import_articles(cursor):
         """
         reads raw-data.csv and fills the articles table
+        added an if condition to include the dummy dataset , dummy is a copy of citeulike-t
+
         """
         print("*** Inserting Articles ***")
         dataset = DataParser.get_dataset()
@@ -171,26 +162,26 @@ class DataParser(object):
                 reader = csv.reader(f, quotechar='"', delimiter=delimiter)
             elif dataset == 'citeulike-a':
                 reader = csv.reader(f, quotechar='"')
+            elif dataset == 'dummy':
+                reader = csv.reader(f, quotechar='"', delimiter=delimiter)
             for line in reader:
                 if first_line:
                     first_line = False
                     continue
                 if dataset == 'citeulike-t':
                     id = int(line[0]) + 1
-                    title = ""
                 elif dataset == 'citeulike-a':
                     id = int(line[0])
-                    title = line[1]
-
+                elif dataset == 'dummy':
+                    id = int(line[0]) + 1
+                title = line[1]
                 if DataParser.store_abstracts():
-                    if dataset == 'citeulike-t':
-                        abstract = line[1]
-                    else:
-                        abstract = line[4]
+                    abstract = line[4]
                 else:
                     abstract = ""
                 cursor.execute("insert into articles(id, title, abstract) values(%s, \"%s\", \"%s\")",
                                (str(id), title, abstract.replace("\"", "\\\"")))
+
     @staticmethod
     def import_citations(cursor):
         """
@@ -240,7 +231,7 @@ class DataParser(object):
     @staticmethod
     def import_users(cursor):
         """
-        reads users.dat to insert entries in users and articles_users table
+        reads users.dat to insert entries in users and articles_users table , added an if condition for the dummy dataset to select 100 users only
         """
         print("*** Inserting Users ***")
         id = 1
@@ -250,15 +241,21 @@ class DataParser(object):
             for line in f:
                 splitted = line.replace("\n", "").split(" ")
                 num_articles = int(splitted[0])
-
-                cursor.execute("insert into users(id) values(%s)" % id)
-                for i in range(1, num_articles + 1):
-                    if dataset == 'citeulike-t':
-                        article_id = int(splitted[i])
-                    elif dataset == 'citeulike-a':
+                if dataset=='dummy' and id<101:
+                    cursor.execute("insert into users(id) values(%s)" % id)
+                    for i in range(1, num_articles + 1):
                         article_id = int(splitted[i]) + 1
-                    cursor.execute("insert into articles_users(user_id, article_id) values(%s, %s)", (id, article_id))
-                id += 1
+                        cursor.execute("insert into articles_users(user_id, article_id) values(%s, %s)", (id, article_id))
+                    id += 1
+                elif dataset == 'citeulike-t' or dataset == 'citeulike-t':
+                    cursor.execute("insert into users(id) values(%s)" % id)
+                    for i in range(1, num_articles + 1):
+                        if dataset == 'citeulike-t':
+                            article_id = int(splitted[i])
+                        elif dataset == 'citeulike-a':
+                            article_id = int(splitted[i]) + 1
+                        cursor.execute("insert into articles_users(user_id, article_id) values(%s, %s)", (id, article_id))
+                    id += 1
 
     @staticmethod
     def get_config():
@@ -276,9 +273,10 @@ class DataParser(object):
         """
         :returns: The dataset file name
         :rtype: str
+        added an if condition to include the dummy dataset
         """
         dataset = DataParser.get_config()["dataset"]
-        if dataset != 'citeulike-a' and dataset != 'citeulike-t':
+        if dataset != 'citeulike-a' and dataset != 'citeulike-t' and dataset != 'dummy' :
             raise NameError("'citeulike-a' and 'citeulike-t' are the only valid datasets")
         return dataset
 
@@ -290,7 +288,8 @@ class DataParser(object):
         """
         return DataParser.get_config()["store_abstracts"]
 
-    def get_abstracts(self):
+    @staticmethod
+    def get_abstracts():
         """
         :returns: the key is document id, value is the document's abstract
         :rtype: dict
@@ -299,20 +298,10 @@ class DataParser(object):
         cursor = db.cursor()
         config = DataParser.get_config()
         cursor.execute("use %s" % config["database"]["database_name"])
-        if self.n_users is None:
-          cursor.execute("select id, replace(abstract, \"'\", \"\") as abstract from articles")
-          abstracts = dict()
-          for id, abstract in cursor:
-            abstracts[id - 1] = abstract 
-        else:      
-          query_string = ', '.join(list(map(lambda x: '%s', self.papers)))
-          cursor.execute("select id, replace(abstract, \"'\", \"\") as abstract from articles where id in" +  
-                           " (%s) order by id" % query_string, self.papers)
-          abstracts = dict()
-          for id, abstract in cursor:
-            abstracts[id - 1] = abstract 
-            #print(abstract[:100])
-            #print("************************************************")
+        cursor.execute("select id, replace(abstract, \"'\", \"\") as abstract from articles")
+        abstracts = dict()
+        for id, abstract in cursor:
+            abstracts[id - 1] = abstract
         return abstracts
 
     @staticmethod
