@@ -146,6 +146,6 @@ class LTRRecommender(object):
         #half vectorized version (still outer loop there) :(
         docs_to_test = self.theta[ self.test_indices[user] ]
         predictions[user , self.test_indices[user] ] = self.user_model[user].predict(docs_to_test)
-        prediction_scores[user,self.test_indices[user]  ] = self.user_model[user].predict_proba(docs_to_test)[0, 1]
+        prediction_scores[user,self.test_indices[user]  ] = self.user_model[user].predict_proba(docs_to_test)[:, 1]
 
       return predictions,prediction_scores

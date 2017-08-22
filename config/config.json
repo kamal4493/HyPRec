@@ -3,8 +3,8 @@
 		"host": "localhost",
 		"user": "root",
 		"password": "1234",
-		"database_name": "cituT"
+		"database_name": "sahwaka"
 	},
-	"dataset": "citeulike-t",
+	"dataset": "citeulike-a",
 	"store_abstracts": true
 }

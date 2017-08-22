@@ -7,15 +7,15 @@ import itertools
 import numpy
 import time
 from optparse import OptionParser
-from lib.evaluator import Evaluator
+#from lib.evaluator import Evaluator
 from lib.evaluator_ltr import LTR_Evaluator
-from lib.grid_search import GridSearch
-from lib.recommender_system import RecommenderSystem
-from util.abstracts_preprocessor import AbstractsPreprocessor
+#from lib.grid_search import GridSearch
+#from lib.recommender_system import RecommenderSystem
+#from util.abstracts_preprocessor import AbstractsPreprocessor
 from util.data_parser import DataParser
-from util.recommender_configuer import RecommenderConfiguration
-from util.model_initializer import ModelInitializer
-from util.runs_loader import RunsLoader
+#from util.recommender_configuer import RecommenderConfiguration
+#from util.model_initializer import ModelInitializer
+#from util.runs_loader import RunsLoader
 from scipy import sparse
 
 
@@ -35,8 +35,8 @@ class RunnableRecommenders(object):
             #self.labeled_ratings = numpy.array(DataParser.get_labeled_r(random))           
             self.users, self.documents = self.ratings.shape
             self.n_items = self.documents
-            self.abstracts_preprocessor = AbstractsPreprocessor(self.n_items,
-                                                                *dataParser.get_word_distribution())
+            #self.abstracts_preprocessor = AbstractsPreprocessor(self.n_items,
+                                                                #*dataParser.get_word_distribution())
             word_to_count, article_to_word,article_to_word_to_count =   dataParser.get_word_distribution()
         else:
             abstracts = {0: 'hell world berlin dna evolution', 1: 'freiburg is green',
@@ -53,8 +53,8 @@ class RunnableRecommenders(object):
             article_to_word_to_count = list(set([(doc_id, w2i[word], abstract.count(word))
                                                  for doc_id, abstract in abstracts.items()
                                                  for word in abstract.split(' ')]))
-            self.abstracts_preprocessor = AbstractsPreprocessor(abstracts, word_to_count,
-                                                                article_to_word, article_to_word_to_count)
+            #self.abstracts_preprocessor = AbstractsPreprocessor(abstracts, word_to_count,
+                                                               # article_to_word, article_to_word_to_count)
             self.documents, self.users = 8, 10
             self.n_items =  self.documents
             self.ratings = numpy.array([[int(not bool((article + user) % 3))
@@ -66,7 +66,7 @@ class RunnableRecommenders(object):
         self.dump = dump
         self.train_more = train_more
         self.random_seed = random_seed
-        self.evaluator = Evaluator(self.ratings, self.abstracts_preprocessor, self.random_seed, self.verbose)
+        #self.evaluator = Evaluator(self.ratings, self.abstracts_preprocessor, self.random_seed, self.verbose)
         #evaluator for LTR 
         self.n_users,self.n_docs = self.ratings.shape
         self.evaluator_ltr = LTR_Evaluator(self.n_users,self.ratings)
@@ -79,14 +79,15 @@ class RunnableRecommenders(object):
         self.term_freq = sparse.coo_matrix((counts, (articles, words)),shape=(num_items , num_vocab) ).tocsr()
 
         
-        self.config = RecommenderConfiguration()
-        self.hyperparameters = self.config.get_hyperparameters()
-        self.options = self.config.get_options()
-        self.initializer = ModelInitializer(self.hyperparameters.copy(), self.options['n_iterations'], self.verbose)
+        #self.config = RecommenderConfiguration()
+        #self.hyperparameters = self.config.get_hyperparameters()
+        #self.options = self.config.get_options()
+        #self.initializer = ModelInitializer(self.hyperparameters.copy(), self.options['n_iterations'], self.verbose)
 
     def run_lda(self):
         """
         Run LDA recommender.
+        """
         """
         from lib.LDA import LDARecommender
         lda_recommender = LDARecommender(self.initializer, self.evaluator, self.hyperparameters, self.options,
@@ -97,10 +98,11 @@ class RunnableRecommenders(object):
                      'ratio {:.5f}, mrr@5 {:.5f}, '\
                      'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
-
+        """
     def run_lda2vec(self):
         """
         Runs LDA2Vec recommender.
+        """
         """
         from lib.LDA2Vec import LDA2VecRecommender
         lda2vec_recommender = LDA2VecRecommender(self.initializer, self.evaluator, self.hyperparameters,
@@ -111,10 +113,12 @@ class RunnableRecommenders(object):
                      'ratio {:.5f}, mrr@5 {:.5f}, '\
                      'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
+        """
 
     def run_sdae(self):
         """
         Runs SDAE recommender.
+        """
         """
         from lib.SDAE import SDAERecommender
         sdae_recommender = SDAERecommender(self.initializer, self.evaluator, self.hyperparameters,
@@ -125,10 +129,12 @@ class RunnableRecommenders(object):
                      'ratio {:.5f}, mrr@5 {:.5f}, '\
                      'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
+        """
 
     def run_collaborative(self):
         """
         Runs collaborative filtering
+        """
         """
         from lib.collaborative_filtering import CollaborativeFiltering
         ALS = CollaborativeFiltering(self.initializer, self.evaluator, self.hyperparameters, self.options,
@@ -140,11 +146,13 @@ class RunnableRecommenders(object):
                      'ratio {:.5f}, mrr@5 {:.5f}, '\
                      'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
+        """
 
     def run_random(self):
         from lib.random_recommender import RandomRecommender
         """
         Runs Random recommender
+        """
         """
         random = RandomRecommender(self.initializer, self.evaluator, self.hyperparameters, self.options,
 									   self.verbose, self.load_matrices, self.dump, self.train_more)
@@ -154,7 +162,7 @@ class RunnableRecommenders(object):
 						 'ratio {:.5f}, mrr@5 {:.5f}, ' \
 						 'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
-
+        """
     def run_ltr_recommender(self):
         from lib.ltr_recommender import LTRRecommender 
         from lib.content_analyser import Content_Analyser 
@@ -194,6 +202,7 @@ class RunnableRecommenders(object):
         """
         Runs grid search
         """
+        """
         hyperparameters = {
             '_lambda': [0.01],
             'n_factors': [50, 100, 150, 200, 250, 300]
@@ -203,11 +212,12 @@ class RunnableRecommenders(object):
                                         dump_matrices=self.dump, train_more=self.train_more,
                                         random_seed=self.random_seed)
         GS = GridSearch(recommender, hyperparameters, self.verbose)
-        best_params, all_results = GS.train()
+        best_params, all_results = GS.train()"""
 
     def run_recommender(self):
         """
         Runs recommender
+        """
         """
         recommender = RecommenderSystem(abstracts_preprocessor=self.abstracts_preprocessor, ratings=self.ratings,
                                         verbose=self.verbose, load_matrices=self.load_matrices,
@@ -219,11 +229,12 @@ class RunnableRecommenders(object):
                      'ratio {:.5f}, mrr@5 {:.5f}, '\
                      'ndcg@5 {:.5f}, mrr@10 {:.5f}, ndcg@10 {:.5f}'
         print(report_str.format(*results))
-        recommender.dump_recommendations(200)
+        recommender.dump_recommendations(200)"""
 
     def run_experiment(self):
         """
         Runs experiment
+        """
         """
         all_results = [['n_factors', '_lambda', 'desc', 'rmse', 'train_recall', 'test_recall', 'recall_at_200',
                         'ratio', 'mrr @ 5', 'ndcg @ 5', 'mrr @ 10', 'ndcg @ 10']]
@@ -250,10 +261,12 @@ class RunnableRecommenders(object):
             current_result.extend(results)
             all_results.append(current_result)
         GridSearch(recommender, {}, self.verbose, report_name='experiment_results').dump_csv(all_results)
+        """
 
     def run_experiment_with_gridsearch(self):
         """
         Runs experiment after running grid search.
+        """
         """
         print("Getting Userbased hyperparameters")
         userbased_configs = {
@@ -325,6 +338,7 @@ class RunnableRecommenders(object):
             current_result.extend(results)
             all_results.append(current_result)
         GridSearch(recommender, {}, self.verbose, report_name='experiment_results').dump_csv(all_results)
+        """
 
 
 if __name__ == '__main__':
