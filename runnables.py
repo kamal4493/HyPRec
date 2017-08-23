@@ -171,12 +171,13 @@ class RunnableRecommenders(object):
         Runs LTR Recommender
         """
         n_folds = 5
-        #split_strategy = "random"
-        split_strategy = "pairwise"
+        split_strategy = "random"
+        #split_strategy = "pairwise"
         #train_data and test_data shape (k,n_users,n_docs)
         #k represent number of folds
         
-        k_fold_ratings = self.evaluator_ltr.generate_k_fold_matrices(self.ratings,n_folds)
+        #k_fold_ratings = self.evaluator_ltr.generate_k_fold_matrices(self.ratings,n_folds)
+        k_fold_test_mask = self.evaluator_ltr.generate_k_fold_matrices(self.ratings,n_folds)
         theta = Content_Analyser().get_document_distribution(self.term_freq)
         sorted_sim_matrix = None
         # getting pairwise cosine similarity matrix (sorted)
@@ -187,15 +188,16 @@ class RunnableRecommenders(object):
         #  all_zeros = not numpy.any(test_data[fold])
         #  if all_zeros:
         #    continue
-          n_users,n_docs = k_fold_ratings[fold].shape
-          ltr_recommender = LTRRecommender(n_users,n_docs,theta,split_strategy,sorted_sim_matrix)
-          ltr_recommender.train(k_fold_ratings[fold])
-          predictions, prediction_scores = ltr_recommender.predict()
-          mrr_at_five = self.evaluator_ltr.calculate_mrr(5,predictions, k_fold_ratings[fold] , prediction_scores)
+          n_users,n_docs = k_fold_test_mask[fold].shape
+          ltr_recommender = LTRRecommender(n_users,n_docs,theta,split_strategy,sorted_sim_matrix , self.ratings)
+          ltr_recommender.train(k_fold_test_mask[fold])
+          predictions, prediction_scores = ltr_recommender.predict(k_fold_test_mask[fold])
+          mrr_at_five = self.evaluator_ltr.calculate_mrr(5,predictions , prediction_scores , k_fold_test_mask[fold])
           ndcg_at_five = self.evaluator_ltr.calculate_ndcg(5,predictions)
           report_str = "Report : mrr@5 {:.5f} , ndcg@5 {:.5f} "
           print(report_str.format(mrr_at_five,ndcg_at_five))
           predictions = None
+          prediction_scores = None
           ltr_recommender = None
 
     def run_grid_search(self):

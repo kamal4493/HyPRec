@@ -25,11 +25,11 @@ class LTR_Evaluator(object):
       n_users,n_docs = rating_matrix.shape
       n_folds = k
       # initialising train and test matrices
-      test_data = numpy.zeros((n_folds,n_users,n_docs))
-      train_data = numpy.zeros((n_folds,n_users,n_docs))
-      for x in range(n_folds):
+      test_mask = numpy.zeros((n_folds,n_users,n_docs) , dtype = bool)
+      #train_data = numpy.zeros((n_folds,n_users,n_docs))
+      #for x in range(n_folds):
         #TODO: memory effic code
-        train_data[x] = rating_matrix.copy()
+       # train_data[x] = rating_matrix.copy()
       #setting the train and test matrices
       for user in range(n_users):
         rated_item_indices = rating_matrix[user].nonzero()[0]
@@ -53,15 +53,15 @@ class LTR_Evaluator(object):
               test_indices = rated_item_indices[k*count : (k+1)*count ]
               test_indices_zeros = non_rated_indices[k*count2 : (k+1)*count2 ]
             #train_indices = numpy.append(rated_item_indices[(k+1)*count :],rated_item_indices[:(k)*count] ) # deprecated
-            train_data[k,user,test_indices] = 2
-            train_data[k,user,test_indices_zeros] = 2
-            
-            test_data[k,user,test_indices] = 1
-            test_data[k,user,test_indices_zeros] = 2
+            #train_data[k,user,test_indices] = 2
+            #train_data[k,user,test_indices_zeros] = 2
+
+            test_mask[k,user,test_indices] = True
+            test_mask[k,user,test_indices_zeros] = True
       #return train_data,test_data
-      return train_data
+      return test_mask
       
-    def calculate_mrr(self, n_recommendations, predictions, k_fold_rating, prediction_scores):
+    def calculate_mrr(self, n_recommendations, predictions, prediction_scores ,test_mask):
       """
       The method calculates the mean reciprocal rank for all users
       by only looking at the top n_recommendations.
@@ -71,10 +71,10 @@ class LTR_Evaluator(object):
       :returns: mrr at n_recommendations
       :rtype: float
       """
-      self.recommendation_indices =self.load_top_recommendations(n_recommendations, prediction_scores, k_fold_rating)
+      self.recommendation_indices =self.load_top_recommendations(n_recommendations, prediction_scores,test_mask)
       mrr_list = []
       
-      for user in range(k_fold_rating.shape[0]):
+      for user in range(self.ratings.shape[0]):
         mrr = 0
         for mrr_index, index in enumerate(self.recommendation_indices[user]):
           score = self.ratings[user][index] * predictions[user][index]
@@ -88,7 +88,7 @@ class LTR_Evaluator(object):
       return numpy.mean(mrr_list, dtype=numpy.float16)
 
       
-    def load_top_recommendations(self, n_recommendations, predictions, k_fold_rating):
+    def load_top_recommendations(self, n_recommendations, predictions ,test_mask):
       """
       This method loads the top n recommendations into a local variable.
 
@@ -97,8 +97,8 @@ class LTR_Evaluator(object):
       :returns: A matrix of top recommendations for each user.
       :rtype: int[][]
       """
-      for user in range(k_fold_rating.shape[0]):
-        test_indices = numpy.where(k_fold_rating[user] == 2 )[0]
+      for user in range(self.ratings.shape[0]):
+        test_indices = numpy.where(test_mask[user])[0]
         top_recommendations = TopRecommendations(n_recommendations)
         for index in test_indices:
           top_recommendations.insert(index, predictions[user][index])
